@@ -1,6 +1,6 @@
 # `wb2k`
 
-Welcoming new folks to `#general` since `<insert-UNIX-timestamp-here>`.
+Welcoming new folks to `#general` since `date --date='@1463824090'`.
 
 ## What's in the Box?
 
