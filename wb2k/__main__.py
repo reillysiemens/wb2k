@@ -110,12 +110,20 @@ def cli(channel, verbose):
 
         logger.info("Listening for joins in #{}".format(channel))
         while True:
+            # handle bug in slack websocket connection https://github.com/reillysiemens/wb2k/issues/1
+            try:
+                # Handle dem messages!
+                for message in sc.rtm_read():
+                    handle_message(message, channel, channel_id, sc, logger)
 
-            # Handle dem messages!
-            for message in sc.rtm_read():
-                handle_message(message, channel, channel_id, sc, logger)
-
-            time.sleep(0.5)
+                time.sleep(0.5)
+            except WebSocketConnectionClosedException:
+                logger.error("Lost connection to Slack, reconnecting...")
+                if not sc.rtm_connect():
+                    logger.info("Failed to reconnect to Slack")
+                    time.sleep(0.5)
+                else:
+                    logger.info("Reconnected to Slack")
 
     else:
         sys.exit(bail('fatal', 'red', "Couldn't connect to Slack"))
