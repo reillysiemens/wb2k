@@ -85,8 +85,10 @@ def handle_message(message, channel, channel_id, sc, logger):
               show_default=True, metavar='CHANNEL',
               help='The channel to welcome users to.')
 @click.option('-v', '--verbose', count=True, help='It goes to 11.')
+@click.option('-r', '--retries', envvar='WB2K_RETRIES', default=8, type=(int), metavar='max_retries',
+              help='The maximum number of times to attempt to reconnect on websocket connection errors')
 @click.version_option()
-def cli(channel, verbose):
+def cli(channel, verbose, retries):
 
     if verbose > 11:
         sys.exit(bail('fatal', 'red', "It doesn't go beyond 11"))
@@ -109,21 +111,35 @@ def cli(channel, verbose):
         logger.debug("Found channel ID {} for #{}".format(channel_id, channel))
 
         logger.info("Listening for joins in #{}".format(channel))
+
+        retry_count = 0
+        backoff = 0.5
+
         while True:
-            # handle bug in slack websocket connection https://github.com/reillysiemens/wb2k/issues/1
             try:
                 # Handle dem messages!
                 for message in sc.rtm_read():
                     handle_message(message, channel, channel_id, sc, logger)
+
+                # reset exponential backoff retry strategy every time we successfully loop
+                # failure would have happened at rtm_read call
+                retry_count = 0
 
                 time.sleep(0.5)
             except WebSocketConnectionClosedException:
                 logger.error("Lost connection to Slack, reconnecting...")
                 if not sc.rtm_connect():
                     logger.info("Failed to reconnect to Slack")
-                    time.sleep(0.5)
+                    if retry_count >= retries:
+                        sys.exit(bail('fatal', 'red', "Too many failed reconnect attempts, shutting down"))
+                    time.sleep((backoff ** 2) / 4)
                 else:
                     logger.info("Reconnected to Slack")
 
+                retry_count += 1
+
     else:
         sys.exit(bail('fatal', 'red', "Couldn't connect to Slack"))
+
+if __name__ == '__main__':
+    cli()
