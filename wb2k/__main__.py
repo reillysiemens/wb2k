@@ -122,11 +122,12 @@ def cli(channel, verbose, retries):
                 for message in sc.rtm_read():
                     handle_message(message, channel, channel_id, sc, logger)
 
-                # reset exponential backoff retry strategy every time we successfully loop
-                # failure would have happened at rtm_read call
+                # Reset exponential backoff retry strategy every time we
+                # successfully loop. Failure would have happened in rtm_read()
                 retry_count = 0
 
                 time.sleep(0.5)
+
             # The websocket module is not an explicit depedency of wb2k, but is
             # necessary to handle an error caused by a bug in Slack's python
             # client: https://github.com/slackhq/python-slackclient/issues/127
@@ -135,7 +136,11 @@ def cli(channel, verbose, retries):
                 if not sc.rtm_connect():
                     logger.info("Failed to reconnect to Slack")
                     if retry_count >= retries:
-                        sys.exit(bail('fatal', 'red', "Too many failed reconnect attempts, shutting down"))
+                        sys.exit(bail(
+                            'fatal',
+                            'red',
+                            "Too many failed reconnect attempts, shutting down")
+                        )
                     time.sleep((backoff ** 2) / 4)
                 else:
                     logger.info("Reconnected to Slack")
