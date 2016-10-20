@@ -5,6 +5,7 @@ import logging
 import logging.config
 
 import click
+import websocket  # Depedency of slackclient, needed for exception handling
 from slackclient import SlackClient
 
 
@@ -126,7 +127,10 @@ def cli(channel, verbose, retries):
                 retry_count = 0
 
                 time.sleep(0.5)
-            except WebSocketConnectionClosedException:
+            # The websocket module is not an explicit depedency of wb2k, but is
+            # necessary to handle an error caused by a bug in Slack's python
+            # client: https://github.com/slackhq/python-slackclient/issues/127
+            except websocket.WebSocketConnectionClosedException:
                 logger.error("Lost connection to Slack, reconnecting...")
                 if not sc.rtm_connect():
                     logger.info("Failed to reconnect to Slack")
