@@ -2,6 +2,7 @@
 import re
 import os.path
 from setuptools import setup, find_packages
+from pip.req import parse_requirements
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -16,14 +17,8 @@ with open(version_path, 'r') as version_file:
     version = re.compile(r".*__version__ = '(.*?)'",
                          re.S).match(version_file.read()).group(1)
 
-requirements = [
-    'click',
-    'slackclient'
-]
-
-test_requirements = [
-    # TODO: put package test requirements here
-]
+install_reqs = [str(r.req) for r in parse_requirements('requirements.txt', session=False)]
+test_reqs = [str(r.req) for r in parse_requirements('dev-requirements.txt', session=False)]
 
 setup(
     name='wb2k',
@@ -36,7 +31,7 @@ setup(
     packages=find_packages(),
     package_dir={'wb2k': 'wb2k'},
     include_package_data=True,
-    install_requires=requirements,
+    install_requires=install_reqs,
     license='ISCL',
     zip_safe=False,
     py_modules=['wb2k'],
@@ -52,7 +47,10 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     test_suite='tests',
-    tests_require=test_requirements,
+    tests_require=test_reqs,
+    extras_require={
+        'dev': test_reqs,
+    },
     entry_points={
         'console_scripts': [
             'wb2k=wb2k.__main__:cli',
