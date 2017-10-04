@@ -128,10 +128,14 @@ def cli(channel, verbose, retries):
 
                 time.sleep(0.5)
 
-            # The websocket module is not an explicit depedency of wb2k, but is
-            # necessary to handle an error caused by a bug in Slack's python
-            # client: https://github.com/slackhq/python-slackclient/issues/127
-            except websocket.WebSocketConnectionClosedException:
+            # This is necessary to handle an error caused by a bug in Slack's
+            # Python client. For more information see
+            # https://github.com/slackhq/python-slackclient/issues/127
+            #
+            # The TimeoutError could be more elegantly resolved by making a PR
+            # to the websocket-client library and letting them coerce that
+            # exception to a WebSocketTimeoutException.
+            except (websocket.WebSocketConnectionClosedException, TimeoutError):
                 logger.error("Lost connection to Slack, reconnecting...")
                 if not sc.rtm_connect():
                     logger.info("Failed to reconnect to Slack")
