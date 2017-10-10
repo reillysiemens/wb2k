@@ -10,7 +10,7 @@ from slackclient import SlackClient
 
 
 def bail(msg_type: str, color: str, text: str) -> str:
-    return "{}: {}".format(click.style(msg_type, fg=color), text)
+    return f"{click.style(msg_type, fg=color)}: {text}"
 
 
 def setup_logging(verbose: int) -> None:
@@ -54,7 +54,7 @@ def find_channel_id(channel: str, sc: SlackClient) -> str:
     channel_ids = [c['id'] for c in channels_list + groups_list if c['name'] == channel]
 
     if not channel_ids:
-        sys.exit(bail('fatal', 'red', "Couldn't find #{}".format(channel)))
+        sys.exit(bail('fatal', 'red', f"Couldn't find #{channel}"))
 
     return channel_ids[0]
 
@@ -74,12 +74,11 @@ def handle_message(message: str, channel: str, channel_id: str, sc: SlackClient,
 
         if message_channel_id == channel_id:
             try:
-                sc.rtm_send_message(channel,
-                                    "Welcome, <@{}>! :hand:".format(user))
-                logger.info("Welcomed {} to #{}".format(username, channel))
+                sc.rtm_send_message(channel, f"Welcome, <@{user}>! :hand:")
+                logger.info(f"Welcomed {username} to #{channel}")
             except AttributeError:
                 logger.setLevel(logging.ERROR)
-                logger.error("Couldn't send message to #{}".format(channel))
+                logger.error(f"Couldn't send message to #{channel}")
 
 
 @click.command()
@@ -110,9 +109,9 @@ def cli(channel: str, verbose: int, retries: int) -> None:
         logger.info("Connected to Slack")
 
         channel_id = find_channel_id(channel, sc)
-        logger.debug("Found channel ID {} for #{}".format(channel_id, channel))
+        logger.debug(f"Found channel ID {channel_id} for #{channel}")
 
-        logger.info("Listening for joins in #{}".format(channel))
+        logger.info(f"Listening for joins in #{channel}")
 
         retry_count = 0
         backoff = 0.5
