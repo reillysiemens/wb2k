@@ -74,7 +74,7 @@ def handle_message(message: str, channel: str, channel_id: str, sc: SlackClient,
 
         if message_channel_id == channel_id:
             try:
-                sc.rtm_send_message(channel, f"Welcome, <@{user}>! :hand:")
+                sc.rtm_send_message(channel, f"Welcome, <@{user}>! :wave:")
                 logger.info(f"Welcomed {username} to #{channel}")
             except AttributeError:
                 logger.setLevel(logging.ERROR)
