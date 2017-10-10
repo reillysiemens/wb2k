@@ -60,26 +60,28 @@ def find_channel_id(channel: str, sc: SlackClient) -> str:
     return channel_ids[0]
 
 
-def handle_message(message: str, channel: str, channel_id: str, sc: SlackClient,
-                   logger: logging.Logger) -> None:
-    pretty_message = pformat(message)
-    logger.debug(f"New message received:\n{pretty_message}")
+def handle_event(event: dict, channel: str, channel_id: str, message: str,
+                 sc: SlackClient, logger: logging.Logger) -> None:
+    pretty_event = pformat(event)
+    logger.debug(f"Event received:\n{pretty_event}")
 
-    subtype = message.get('subtype')
-    user = message.get('user')
+    subtype = event.get('subtype')
+    user = event.get('user')
 
     if subtype in ('group_join', 'channel_join') and user:
 
-        # We will use the message's channel ID to send a response and refer to
+        # We will use the event's channel ID to send a response and refer to
         # users by their display_name in accordance with new guidelines.
         # https://api.slack.com/changelog/2017-09-the-one-about-usernames
-        message_channel_id = message.get('channel')
-        user_profile = message.get('user_profile')
+        event_channel_id = event.get('channel')
+        user_profile = event.get('user_profile')
         username = user_profile.get('display_name')
+        user_mention = f"<@{user}>"
+        message = message.replace('{user}', user_mention)
 
-        if message_channel_id == channel_id:
+        if event_channel_id == channel_id:
             try:
-                sc.rtm_send_message(message_channel_id, f"Welcome, <@{user}>! :wave:")
+                sc.rtm_send_message(event_channel_id, message)
                 logger.info(f"Welcomed {username} to #{channel}")
             except AttributeError:
                 logger.setLevel(logging.ERROR)
@@ -90,11 +92,16 @@ def handle_message(message: str, channel: str, channel_id: str, sc: SlackClient,
 @click.option('-c', '--channel', envvar='WB2K_CHANNEL', default='general',
               show_default=True, metavar='CHANNEL',
               help='The channel to welcome users to.')
+@click.option('-m', '--message', envvar='WB2K_MESSAGE',
+              default='Welcome, {user}! :wave:', show_default=True,
+              metavar='MESSAGE',
+              help='The message to use when welcoming users. If present {user} '
+              'will be replaced by a user mention.')
 @click.option('-v', '--verbose', count=True, help='It goes to 11.')
 @click.option('-r', '--retries', envvar='WB2K_RETRIES', default=8, type=(int), metavar='max_retries',
               help='The maximum number of times to attempt to reconnect on websocket connection errors')
 @click.version_option()
-def cli(channel: str, verbose: int, retries: int) -> None:
+def cli(channel: str, message: str, verbose: int, retries: int) -> None:
 
     if verbose > 11:
         sys.exit(bail('fatal', 'red', "It doesn't go beyond 11"))
@@ -123,9 +130,9 @@ def cli(channel: str, verbose: int, retries: int) -> None:
 
         while True:
             try:
-                # Handle dem messages!
-                for message in sc.rtm_read():
-                    handle_message(message, channel, channel_id, sc, logger)
+                # Handle dem events!
+                for event in sc.rtm_read():
+                    handle_event(event, channel, channel_id, message, sc, logger)
 
                 # Reset exponential backoff retry strategy every time we
                 # successfully loop. Failure would have happened in rtm_read()
