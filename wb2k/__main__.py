@@ -3,6 +3,7 @@ import sys
 import time
 import logging
 import logging.config
+from pprint import pformat
 
 import click
 import websocket  # Depedency of slackclient, needed for exception handling
@@ -61,7 +62,8 @@ def find_channel_id(channel: str, sc: SlackClient) -> str:
 
 def handle_message(message: str, channel: str, channel_id: str, sc: SlackClient,
                    logger: logging.Logger) -> None:
-    logger.debug(message)
+    pretty_message = pformat(message)
+    logger.debug(f"New message received:\n{pretty_message}")
 
     subtype = message.get('subtype')
     user = message.get('user')
