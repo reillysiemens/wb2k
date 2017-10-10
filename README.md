@@ -87,7 +87,7 @@ Those wishing to craft the highest quality welcome messages may eventually
 notice that putting `{user}` in your message causes it to replaced by a
 [user mention][user mention] for the user who just joined.
 
-![Magic!](https://i.imgur.com/iZcUNxH.gif)
+![Magic!](https://media0.giphy.com/media/12NUbkX6p4xOO4/giphy.gif)
 
 
 ### This Isn't What I Wanted
