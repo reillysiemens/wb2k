@@ -102,6 +102,9 @@ def handle_event(event: dict, channel: str, channel_id: str, message: str,
               help='The maximum number of times to attempt to reconnect on websocket connection errors')
 @click.version_option()
 def cli(channel: str, message: str, verbose: int, retries: int) -> None:
+    # Due to some unfortunate limitations in the Slack RTM API
+    # (https://api.slack.com/rtm#formatting_messages) message formatting is
+    # limited to basic formatting.
 
     if verbose > 11:
         sys.exit(bail('fatal', 'red', "It doesn't go beyond 11"))
