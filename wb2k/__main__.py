@@ -9,11 +9,11 @@ import websocket  # Depedency of slackclient, needed for exception handling
 from slackclient import SlackClient
 
 
-def bail(msg_type, color, text):
+def bail(msg_type: str, color: str, text: str) -> str:
     return "{}: {}".format(click.style(msg_type, fg=color), text)
 
 
-def setup_logging(verbose):
+def setup_logging(verbose: int) -> None:
     logging.config.dictConfig({
         'version': 1,
         'disable_existing_loggers': False,
@@ -43,7 +43,7 @@ def setup_logging(verbose):
     })
 
 
-def find_channel_id(channel, sc):
+def find_channel_id(channel: str, sc: SlackClient) -> str:
     channels_list = sc.api_call("channels.list").get('channels')
     groups_list = sc.api_call("groups.list").get('groups')
 
@@ -59,7 +59,8 @@ def find_channel_id(channel, sc):
     return channel_ids[0]
 
 
-def handle_message(message, channel, channel_id, sc, logger):
+def handle_message(message: str, channel: str, channel_id: str, sc: SlackClient,
+                   logger: logging.Logger) -> None:
     logger.debug(message)
 
     subtype = message.get('subtype')
@@ -89,7 +90,7 @@ def handle_message(message, channel, channel_id, sc, logger):
 @click.option('-r', '--retries', envvar='WB2K_RETRIES', default=8, type=(int), metavar='max_retries',
               help='The maximum number of times to attempt to reconnect on websocket connection errors')
 @click.version_option()
-def cli(channel, verbose, retries):
+def cli(channel: str, verbose: int, retries: int) -> None:
 
     if verbose > 11:
         sys.exit(bail('fatal', 'red', "It doesn't go beyond 11"))
