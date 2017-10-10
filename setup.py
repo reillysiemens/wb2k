@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import re
 import os.path
+import sys
 from setuptools import setup, find_packages
 from pip.req import parse_requirements
 
+if sys.version_info < (3, 6):
+    sys.exit('Python 3.6+ is required. Ancient Python is unsupported.')
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -44,6 +47,7 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Operating System :: POSIX :: BSD :: FreeBSD',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3 :: Only',
     ],
     test_suite='tests',
