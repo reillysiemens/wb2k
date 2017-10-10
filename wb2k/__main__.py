@@ -70,13 +70,16 @@ def handle_message(message: str, channel: str, channel_id: str, sc: SlackClient,
 
     if subtype in ('group_join', 'channel_join') and user:
 
+        # We will use the message's channel ID to send a response and refer to
+        # users by their display_name in accordance with new guidelines.
+        # https://api.slack.com/changelog/2017-09-the-one-about-usernames
         message_channel_id = message.get('channel')
         user_profile = message.get('user_profile')
-        username = user_profile.get('name')
+        username = user_profile.get('display_name')
 
         if message_channel_id == channel_id:
             try:
-                sc.rtm_send_message(channel, f"Welcome, <@{user}>! :wave:")
+                sc.rtm_send_message(message_channel_id, f"Welcome, <@{user}>! :wave:")
                 logger.info(f"Welcomed {username} to #{channel}")
             except AttributeError:
                 logger.setLevel(logging.ERROR)
