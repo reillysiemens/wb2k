@@ -3,17 +3,18 @@ import sys
 import time
 import logging
 import logging.config
+from pprint import pformat
 
 import click
 import websocket  # Depedency of slackclient, needed for exception handling
 from slackclient import SlackClient
 
 
-def bail(msg_type, color, text):
-    return "{}: {}".format(click.style(msg_type, fg=color), text)
+def bail(msg_type: str, color: str, text: str) -> str:
+    return f"{click.style(msg_type, fg=color)}: {text}"
 
 
-def setup_logging(verbose):
+def setup_logging(verbose: int) -> None:
     logging.config.dictConfig({
         'version': 1,
         'disable_existing_loggers': False,
@@ -43,7 +44,7 @@ def setup_logging(verbose):
     })
 
 
-def find_channel_id(channel, sc):
+def find_channel_id(channel: str, sc: SlackClient) -> str:
     channels_list = sc.api_call("channels.list").get('channels')
     groups_list = sc.api_call("groups.list").get('groups')
 
@@ -54,42 +55,56 @@ def find_channel_id(channel, sc):
     channel_ids = [c['id'] for c in channels_list + groups_list if c['name'] == channel]
 
     if not channel_ids:
-        sys.exit(bail('fatal', 'red', "Couldn't find #{}".format(channel)))
+        sys.exit(bail('fatal', 'red', f"Couldn't find #{channel}"))
 
     return channel_ids[0]
 
 
-def handle_message(message, channel, channel_id, sc, logger):
-    logger.debug(message)
+def handle_event(event: dict, channel: str, channel_id: str, message: str,
+                 sc: SlackClient, logger: logging.Logger) -> None:
+    pretty_event = pformat(event)
+    logger.debug(f"Event received:\n{pretty_event}")
 
-    subtype = message.get('subtype')
-    user = message.get('user')
+    subtype = event.get('subtype')
+    user = event.get('user')
 
     if subtype in ('group_join', 'channel_join') and user:
 
-        message_channel_id = message.get('channel')
-        user_profile = message.get('user_profile')
-        username = user_profile.get('name')
+        # We will use the event's channel ID to send a response and refer to
+        # users by their display_name in accordance with new guidelines.
+        # https://api.slack.com/changelog/2017-09-the-one-about-usernames
+        event_channel_id = event.get('channel')
+        user_profile = event.get('user_profile')
+        username = user_profile.get('display_name')
+        user_mention = f"<@{user}>"
+        message = message.replace('{user}', user_mention)
 
-        if message_channel_id == channel_id:
+        if event_channel_id == channel_id:
             try:
-                sc.rtm_send_message(channel,
-                                    "Welcome, <@{}>! :hand:".format(user))
-                logger.info("Welcomed {} to #{}".format(username, channel))
+                sc.rtm_send_message(event_channel_id, message)
+                logger.info(f"Welcomed {username} to #{channel}")
             except AttributeError:
                 logger.setLevel(logging.ERROR)
-                logger.error("Couldn't send message to #{}".format(channel))
+                logger.error(f"Couldn't send message to #{channel}")
 
 
 @click.command()
 @click.option('-c', '--channel', envvar='WB2K_CHANNEL', default='general',
               show_default=True, metavar='CHANNEL',
               help='The channel to welcome users to.')
+@click.option('-m', '--message', envvar='WB2K_MESSAGE',
+              default='Welcome, {user}! :wave:', show_default=True,
+              metavar='MESSAGE',
+              help='The message to use when welcoming users. If present {user} '
+              'will be replaced by a user mention.')
 @click.option('-v', '--verbose', count=True, help='It goes to 11.')
 @click.option('-r', '--retries', envvar='WB2K_RETRIES', default=8, type=(int), metavar='max_retries',
               help='The maximum number of times to attempt to reconnect on websocket connection errors')
 @click.version_option()
-def cli(channel, verbose, retries):
+def cli(channel: str, message: str, verbose: int, retries: int) -> None:
+    # Due to some unfortunate limitations in the Slack RTM API
+    # (https://api.slack.com/rtm#formatting_messages) message formatting is
+    # limited to basic formatting.
 
     if verbose > 11:
         sys.exit(bail('fatal', 'red', "It doesn't go beyond 11"))
@@ -109,18 +124,18 @@ def cli(channel, verbose, retries):
         logger.info("Connected to Slack")
 
         channel_id = find_channel_id(channel, sc)
-        logger.debug("Found channel ID {} for #{}".format(channel_id, channel))
+        logger.debug(f"Found channel ID {channel_id} for #{channel}")
 
-        logger.info("Listening for joins in #{}".format(channel))
+        logger.info(f"Listening for joins in #{channel}")
 
         retry_count = 0
         backoff = 0.5
 
         while True:
             try:
-                # Handle dem messages!
-                for message in sc.rtm_read():
-                    handle_message(message, channel, channel_id, sc, logger)
+                # Handle dem events!
+                for event in sc.rtm_read():
+                    handle_event(event, channel, channel_id, message, sc, logger)
 
                 # Reset exponential backoff retry strategy every time we
                 # successfully loop. Failure would have happened in rtm_read()
@@ -128,10 +143,14 @@ def cli(channel, verbose, retries):
 
                 time.sleep(0.5)
 
-            # The websocket module is not an explicit depedency of wb2k, but is
-            # necessary to handle an error caused by a bug in Slack's python
-            # client: https://github.com/slackhq/python-slackclient/issues/127
-            except websocket.WebSocketConnectionClosedException:
+            # This is necessary to handle an error caused by a bug in Slack's
+            # Python client. For more information see
+            # https://github.com/slackhq/python-slackclient/issues/127
+            #
+            # The TimeoutError could be more elegantly resolved by making a PR
+            # to the websocket-client library and letting them coerce that
+            # exception to a WebSocketTimeoutException.
+            except (websocket.WebSocketConnectionClosedException, TimeoutError):
                 logger.error("Lost connection to Slack, reconnecting...")
                 if not sc.rtm_connect():
                     logger.info("Failed to reconnect to Slack")

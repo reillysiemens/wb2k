@@ -1,6 +1,7 @@
 # `wb2k`
 
-Welcoming new folks to `#general` since `date --date='@1463824090'`.
+Welcoming new folks to `#general` since `date --date='@1463824090'` (except for
+that time between `1503469220` and `1506995527` when it was broken).
 
 ## What's in the Box?
 
@@ -69,6 +70,26 @@ Do keep in mind that `wb2k` actually has to have access to
 `#some_random_channel`. You can't just use it to snoop on previously
 unknown or private channels.
 
+### I Don't Like Your Welcome Message!
+_Chill_. The `-m` flag was added just for you (yes, you)! Feel free to
+customize messages until the cows come home.
+```shell
+wb2k -m 'ようこそ!'
+```
+
+As is customary, you can define a `WB2K_MESSAGE` environment variable like
+```
+export WB2K_MESSAGE="Look, newlines
+and basic :slack: formatting are supported as well!"
+```
+
+Those wishing to craft the highest quality welcome messages may eventually
+notice that putting `{user}` in your message causes it to replaced by a
+[user mention][user mention] for the user who just joined.
+
+![Magic!](https://media0.giphy.com/media/12NUbkX6p4xOO4/giphy.gif)
+
+
 ### This Isn't What I Wanted
 
 Still confused? Consult
@@ -84,3 +105,4 @@ This package was created with help from [Cookiecutter].
 [create a new bot]: https://my.slack.com/services/new/bot
 [virtualenv]: https://virtualenv.pypa.io/en/stable
 [Cookiecutter]: https://github.com/audreyr/cookiecutter
+[user mention]: https://get.slack.help/hc/en-us/articles/205240127-Mention-a-member
