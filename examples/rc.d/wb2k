@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# PROVIDE: wb2k
+# REQUIRE: DAEMON NETWORKING
+# KEYWORD: shutdown
+#
+# This file should be installed as /usr/local/etc/rc.d/wb2k.
+#
+# Add the following lines to /etc/rc.conf to enable wb2k:
+#
+# wb2k_enable="YES"
+# wb2k_user="<Run wb2k as this user>"
+# wb2k_lang="<Set this $LANG for the service>"
+# wb2k_token="<Slack API token>"
+# wb2k_channel="<Slack channel>"
+# wb2k_message="<Welcome message>"
+# wb2k_verbosity="<Logging verbosity>"
+# wb2k_retries="<Maximum reconnection retries>"
+#
+# For default setup, create a user named 'wb2k', set its home directory to
+# /nonexistent and its shell to /usr/sbin/nologin.
+
+. /etc/rc.subr
+
+name=wb2k
+rcvar=wb2k_enable
+
+load_rc_config ${name}
+
+command="/usr/local/bin/wb2k"
+pidfile="/var/run/${name}.pid"
+command_interpreter="/usr/local/bin/python3.6"
+
+start_precmd="${name}_precmd"
+start_cmd="${name}_start"
+status_cmd="${name}_status"
+
+: ${wb2k_enable="NO"}
+: ${wb2k_user="wb2k"}
+: ${wb2k_lang="en_US.UTF-8"}
+: ${wb2k_token=""}
+: ${wb2k_channel="general"}
+: ${wb2k_message="Welcome, {user}! :wave:"}
+: ${wb2k_verbosity=""}
+: ${wb2k_retries="8"}
+
+export WB2K_TOKEN="${wb2k_token}"
+
+# wb2k uses Click, which requires that the $LANG environment variable be set.
+# See http://click.pocoo.org/6/python3/#python-3-surrogate-handling.
+export LANG="${wb2k_lang}"
+
+# The message is given as an environment variable rather than a flag due to the
+# quoting/escaping complexities of allowing arbitary input and the laziness of
+# the author.
+export WB2K_MESSAGE="${wb2k_message}"
+
+wb2k_precmd() {
+    if [ -z "${WB2K_TOKEN}" ]; then
+        printf "wb2k_token \033[31mmust\033[0m be set in the rc config\n"
+        exit 1
+    fi
+}
+
+wb2k_start() {
+    local verbosity
+
+    # Set flags.
+    wb2k_flags="--channel ${wb2k_channel} --retries ${wb2k_retries}"
+
+    # Crank up the verbosity if necessary.
+    if [ -n "${wb2k_verbosity}" -a "${wb2k_verbosity}" != 0 ]; then
+        verbosity=$(printf 'v%.0s' $(seq 1 ${wb2k_verbosity}))
+        wb2k_flags="${wb2k_flags} -${verbosity}"
+    fi
+
+    # Start the service as a daemon.
+    daemon_flags="-f -u ${wb2k_user} -t ${name}d -p ${pidfile}"
+    /usr/sbin/daemon $daemon_flags $command $wb2k_flags
+}
+
+wb2k_status() {
+    # It's not strictly necessary to override this, but pretty colors are nice.
+    rc_pid=$(check_pidfile $pidfile $command $command_interpreter)
+    if [ -n "${rc_pid}" ]; then
+        printf "${name} is \033[32mrunning\033[0m as pid ${rc_pid}.\n"
+    else
+        printf "${name} is \033[31mnot running\033[0m.\n"
+    fi
+}
+
+run_rc_command "$1"
