@@ -1,8 +1,15 @@
 language: python
 python:
   - "3.6"
-
+env:
+  global:
+    - NEWEST_PYTHON=3.6
 install:
   - pip install -e .'[dev]'
 script:
   - pytest
+after_success:
+  - |
+    if [[ $TRAVIS_PYTHON_VERSION == $NEWEST_PYTHON ]]; then
+      pip install python-coveralls && coveralls
+    fi
