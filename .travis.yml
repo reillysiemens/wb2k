@@ -13,3 +13,5 @@ after_success:
     if [[ $TRAVIS_PYTHON_VERSION == $NEWEST_PYTHON ]]; then
       pip install python-coveralls && coveralls
     fi
+notifications:
+  email: false
