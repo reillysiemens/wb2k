@@ -1,4 +1,5 @@
 # `wb2k`
+[![build status][build status]][travis-ci] [![coverage status][coverage status]][coveralls]
 
 Welcoming new folks to `#general` since `date --date='@1463824090'` (except for
 that time between `1503469220` and `1506995527` when it was broken).
@@ -106,3 +107,9 @@ This package was created with help from [Cookiecutter].
 [virtualenv]: https://virtualenv.pypa.io/en/stable
 [Cookiecutter]: https://github.com/audreyr/cookiecutter
 [user mention]: https://get.slack.help/hc/en-us/articles/205240127-Mention-a-member
+
+<!-- Badges -->
+[travis-ci]: https://travis-ci.org/reillysiemens/wb2k
+[coveralls]: https://coveralls.io/github/reillysiemens/wb2k?branch=master
+[build status]: https://img.shields.io/travis/reillysiemens/wb2k/master.svg?style=flat-square&label=build
+[coverage status]: https://img.shields.io/coveralls/reillysiemens/wb2k/master.svg?style=flat-square&label=coverage
