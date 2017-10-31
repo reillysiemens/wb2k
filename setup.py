@@ -21,7 +21,7 @@ with open(version_path, 'r') as version_file:
                          re.S).match(version_file.read()).group(1)
 
 install_reqs = [str(r.req) for r in parse_requirements('requirements.txt', session=False)]
-test_reqs = [str(r.req) for r in parse_requirements('dev-requirements.txt', session=False)]
+dev_reqs = [str(r.req) for r in parse_requirements('dev-requirements.txt', session=False)]
 
 setup(
     name='wb2k',
@@ -51,9 +51,9 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     test_suite='tests',
-    tests_require=test_reqs,
+    tests_require=dev_reqs,
     extras_require={
-        'dev': test_reqs,
+        'dev': dev_reqs,
     },
     entry_points={
         'console_scripts': [
