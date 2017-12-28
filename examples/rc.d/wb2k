@@ -8,6 +8,7 @@
 #
 # Add the following lines to /etc/rc.conf to enable wb2k:
 #
+# wb2k_venv="<path to virtualenv with wb2k installed>"
 # wb2k_enable="YES"
 # wb2k_user="<Run wb2k as this user>"
 # wb2k_lang="<Set this $LANG for the service>"
@@ -18,18 +19,23 @@
 # wb2k_retries="<Maximum reconnection retries>"
 #
 # For default setup, create a user named 'wb2k', set its home directory to
-# /nonexistent and its shell to /usr/sbin/nologin.
+# /nonexistent and its shell to /usr/sbin/nologin. Then create a virtualenv
+# (ideally with `python3 -m venv /usr/local/lib/venvs/wb2k') and install wb2k
+# into it.
 
 . /etc/rc.subr
 
 name=wb2k
 rcvar=wb2k_enable
 
+: ${wb2k_venv="/usr/local/lib/venvs/${name}"}
+. ${wb2k_venv}/bin/activate
+
 load_rc_config ${name}
 
-command="/usr/local/bin/wb2k"
+command=$(which wb2k)
 pidfile="/var/run/${name}.pid"
-command_interpreter="/usr/local/bin/python3.6"
+command_interpreter=$(which python3)
 
 start_precmd="${name}_precmd"
 start_cmd="${name}_start"
