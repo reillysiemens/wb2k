@@ -1,5 +1,5 @@
 import logging
-import unittest.mock as mock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -7,6 +7,7 @@ from wb2k.__main__ import (
     bail,
     setup_logging,
     find_channel_id,
+    handle_event,
 )
 
 
@@ -18,7 +19,7 @@ def slack_client():
             groups=[{'id': '1800IDGAF', 'name': 'super_secret_club'}],
         )
 
-    slack_client = mock.MagicMock(api_call=api_call)
+    slack_client = MagicMock(api_call=api_call)
     return slack_client
 
 
@@ -98,3 +99,35 @@ def test_find_channel_id_fails_with_missing_channel(slack_client, monkeypatch):
         find_channel_id(channel, slack_client)
 
     assert str(err.value) == error_message
+
+
+def test_handle_event_ignores_all_but_group_and_channel_joins(slack_client, monkeypatch):
+    channel = 'general'
+    channel_id = '1337H4CKS'
+    message = 'Hello, World!'
+
+    # Note: This event needs to have a `user` or `handle_event` will just
+    # ignore the event altogether regardless of its subtype.
+    event = dict(
+        type='message',
+        channel=channel_id,
+        user='XKCDP1337',
+        text=message,
+        ts='1355517523.000005'
+    )
+
+    monkeypatch.setattr(slack_client, 'rtm_send_message', MagicMock())
+    logger = MagicMock()
+
+    handle_event(
+        event=event,
+        channel=channel,
+        channel_id=channel_id,
+        message=message,
+        sc=slack_client,
+        logger=logger
+    )
+
+    # If the event didn't contain a group_join or channel_join subtype we
+    # expect no messages to be sent via the RTM API.
+    slack_client.rtm_send_message.assert_not_called()
