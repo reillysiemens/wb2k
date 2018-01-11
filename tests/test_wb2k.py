@@ -165,3 +165,39 @@ def test_handle_event_channel_join(slack_client, monkeypatch):
 
     slack_client.rtm_send_message.assert_called_once_with(channel_id,
                                                           expected_message)
+
+def test_handle_event_unable_to_send_response(slack_client, monkeypatch):
+    channel = 'general'
+    channel_id = '1337H4CKS'
+    message = "Welcome, {user}! :wave:"
+    expected_message = 'Welcome, <@XKCDP1337>! :wave:'
+
+    event = dict(
+        channel=channel_id,
+        subtype='channel_join',
+        text='<@XKCDP1337> has joined the channel',
+        type='message',
+        user='XKCDP1337',
+        user_profile=dict(
+            display_name='Randall Munroe',
+            # Many other fields omitted...
+        )
+    )
+
+    def _raise_attribute_error(channel_id, message):
+        raise AttributeError
+
+    monkeypatch.setattr(slack_client, 'rtm_send_message', _raise_attribute_error)
+    logger = MagicMock()
+
+    handle_event(
+        event=event,
+        channel=channel,
+        channel_id=channel_id,
+        message=message,
+        sc=slack_client,
+        logger=logger
+    )
+
+    logger.setLevel.assert_called_once_with(logging.ERROR)
+    logger.error.assert_called_once_with(f"Couldn't send message to #{channel}")
