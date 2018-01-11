@@ -84,7 +84,6 @@ def handle_event(event: dict, channel: str, channel_id: str, message: str,
                 sc.rtm_send_message(event_channel_id, message)
                 logger.info(f"Welcomed {username} to #{channel}")
             except AttributeError:
-                logger.setLevel(logging.ERROR)
                 logger.error(f"Couldn't send message to #{channel}")
 
 
