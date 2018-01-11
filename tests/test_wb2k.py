@@ -199,5 +199,4 @@ def test_handle_event_unable_to_send_response(slack_client, monkeypatch):
         logger=logger
     )
 
-    logger.setLevel.assert_called_once_with(logging.ERROR)
     logger.error.assert_called_once_with(f"Couldn't send message to #{channel}")
