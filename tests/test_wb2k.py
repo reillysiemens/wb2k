@@ -131,3 +131,37 @@ def test_handle_event_ignores_all_but_group_and_channel_joins(slack_client, monk
     # If the event didn't contain a group_join or channel_join subtype we
     # expect no messages to be sent via the RTM API.
     slack_client.rtm_send_message.assert_not_called()
+
+
+def test_handle_event_channel_join(slack_client, monkeypatch):
+    channel = 'general'
+    channel_id = '1337H4CKS'
+    message = "Welcome, {user}! :wave:"
+    expected_message = 'Welcome, <@XKCDP1337>! :wave:'
+
+    event = dict(
+        channel=channel_id,
+        subtype='channel_join',
+        text='<@XKCDP1337> has joined the channel',
+        type='message',
+        user='XKCDP1337',
+        user_profile=dict(
+            display_name='Randall Munroe',
+            # Many other fields omitted...
+        )
+    )
+
+    monkeypatch.setattr(slack_client, 'rtm_send_message', MagicMock())
+    logger = MagicMock()
+
+    handle_event(
+        event=event,
+        channel=channel,
+        channel_id=channel_id,
+        message=message,
+        sc=slack_client,
+        logger=logger
+    )
+
+    slack_client.rtm_send_message.assert_called_once_with(channel_id,
+                                                          expected_message)
