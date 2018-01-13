@@ -201,3 +201,19 @@ def test_handle_event_unable_to_send_response(slack_client, monkeypatch):
     )
 
     logger.error.assert_called_once_with(f"Couldn't send message to #{channel}")
+
+def test_run_fails_without_slack_connection(slack_client, monkeypatch):
+    error_message = "\x1b[31mfatal\x1b[0m: Couldn't connect to Slack"
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', lambda: False)
+
+    with pytest.raises(SystemExit) as err:
+        run(
+            sc=slack_client,
+            channel='general',
+            message='Hello, World!',
+            retries=0,
+            logger=MagicMock()
+        )
+
+    assert str(err.value) == error_message
