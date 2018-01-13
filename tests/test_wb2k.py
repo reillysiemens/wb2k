@@ -5,9 +5,10 @@ import pytest
 
 from wb2k.__main__ import (
     bail,
-    setup_logging,
     find_channel_id,
     handle_event,
+    run,
+    setup_logging,
 )
 
 
