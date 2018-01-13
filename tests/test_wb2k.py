@@ -2,6 +2,7 @@ import logging
 from unittest.mock import MagicMock
 
 import pytest
+import websocket
 
 from wb2k.__main__ import (
     bail,
@@ -206,6 +207,57 @@ def test_run_fails_without_slack_connection(slack_client, monkeypatch):
     error_message = "\x1b[31mfatal\x1b[0m: Couldn't connect to Slack"
 
     monkeypatch.setattr(slack_client, 'rtm_connect', lambda: False)
+
+    with pytest.raises(SystemExit) as err:
+        run(
+            sc=slack_client,
+            channel='general',
+            message='Hello, World!',
+            retries=0,
+            logger=MagicMock()
+        )
+
+    assert str(err.value) == error_message
+
+
+def test_run_fails_with_lost_websocket_connection(slack_client, monkeypatch):
+    error_message = ("\x1b[31mfatal\x1b[0m: Too many failed reconnect "
+                     "attempts, shutting down")
+
+    _rtm_connect = MagicMock(side_effect=[True, False])
+
+    def _raise_websocket_connection_closed_exception():
+        raise websocket.WebSocketConnectionClosedException
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', _rtm_connect)
+    monkeypatch.setattr(
+        slack_client,
+        'rtm_read',
+        _raise_websocket_connection_closed_exception
+    )
+
+    with pytest.raises(SystemExit) as err:
+        run(
+            sc=slack_client,
+            channel='general',
+            message='Hello, World!',
+            retries=0,
+            logger=MagicMock()
+        )
+
+    assert str(err.value) == error_message
+
+def test_run_fails_with_timeout_error(slack_client, monkeypatch):
+    error_message = ("\x1b[31mfatal\x1b[0m: Too many failed reconnect "
+                     "attempts, shutting down")
+
+    _rtm_connect = MagicMock(side_effect=[True, False])
+
+    def _raise_timeout_error():
+        raise TimeoutError
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', _rtm_connect)
+    monkeypatch.setattr(slack_client, 'rtm_read', _raise_timeout_error)
 
     with pytest.raises(SystemExit) as err:
         run(
