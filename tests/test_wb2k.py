@@ -1,9 +1,12 @@
 import logging
+import time
 from unittest.mock import MagicMock
 
 import pytest
+from slackclient import SlackClient
 import websocket
 
+import wb2k
 from wb2k.__main__ import (
     bail,
     find_channel_id,
@@ -202,6 +205,52 @@ def test_handle_event_unable_to_send_response(slack_client, monkeypatch):
     )
 
     logger.error.assert_called_once_with(f"Couldn't send message to #{channel}")
+
+
+def test_run_can_handle_events(slack_client, monkeypatch):
+    event = dict()
+    events = [event, event]
+    channel = 'general'
+    channel_id = '1337H4CKS'
+    message = "Welcome, {user}! :wave:"
+
+    class _ControlFlowAxeMurderer(Exception):
+        """ A.K.A. Infinite Loop Be Gone!"""
+
+    def _sleep(seconds: float) -> None:
+        raise _ControlFlowAxeMurderer
+
+    def _find_channel_id(channel: str, sc: SlackClient) -> str:
+        return channel_id
+
+    _handle_event = MagicMock()
+    logger = MagicMock()
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', lambda: True)
+    monkeypatch.setattr(slack_client, 'rtm_read', lambda: events)
+    monkeypatch.setattr(wb2k.__main__, 'find_channel_id', _find_channel_id)
+    monkeypatch.setattr(wb2k.__main__, 'handle_event', _handle_event)
+    monkeypatch.setattr(time, 'sleep', _sleep)
+
+    with pytest.raises(_ControlFlowAxeMurderer):
+        run(
+            sc=slack_client,
+            channel=channel,
+            message=message,
+            retries=0,
+            logger=logger
+        )
+
+    _handle_event.assert_called_with(
+        event,
+        channel,
+        channel_id,
+        message,
+        slack_client,
+        logger
+    )
+
+
 
 def test_run_fails_without_slack_connection(slack_client, monkeypatch):
     error_message = "\x1b[31mfatal\x1b[0m: Couldn't connect to Slack"
