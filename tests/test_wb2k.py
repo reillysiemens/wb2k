@@ -6,8 +6,8 @@ import pytest
 from slackclient import SlackClient
 import websocket
 
-import wb2k
-from wb2k.__main__ import (
+import layabout
+from layabout import (
     bail,
     find_channel_id,
     handle_event,
@@ -226,8 +226,8 @@ def test_run_can_handle_events(slack_client, monkeypatch):
 
     monkeypatch.setattr(slack_client, 'rtm_connect', lambda: True)
     monkeypatch.setattr(slack_client, 'rtm_read', lambda: events)
-    monkeypatch.setattr(wb2k.__main__, 'find_channel_id', _find_channel_id)
-    monkeypatch.setattr(wb2k.__main__, 'handle_event', _handle_event)
+    monkeypatch.setattr(layabout, 'find_channel_id', _find_channel_id)
+    monkeypatch.setattr(layabout, 'handle_event', _handle_event)
     monkeypatch.setattr(time, 'sleep', _sleep)
 
     with pytest.raises(_ControlFlowAxeMurderer):
