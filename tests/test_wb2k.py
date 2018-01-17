@@ -1,13 +1,18 @@
 import logging
+import time
 from unittest.mock import MagicMock
 
 import pytest
+from slackclient import SlackClient
+import websocket
 
+import wb2k
 from wb2k.__main__ import (
     bail,
-    setup_logging,
     find_channel_id,
     handle_event,
+    run,
+    setup_logging,
 )
 
 
@@ -200,3 +205,116 @@ def test_handle_event_unable_to_send_response(slack_client, monkeypatch):
     )
 
     logger.error.assert_called_once_with(f"Couldn't send message to #{channel}")
+
+
+def test_run_can_handle_events(slack_client, monkeypatch):
+    event = dict()
+    events = [event, event]
+    channel = 'general'
+    channel_id = '1337H4CKS'
+    message = "Welcome, {user}! :wave:"
+
+    class _ControlFlowAxeMurderer(Exception):
+        """ A.K.A. Infinite Loop Be Gone!"""
+
+    def _find_channel_id(channel: str, sc: SlackClient) -> str:
+        return channel_id
+
+    _handle_event = MagicMock()
+    _sleep = MagicMock(side_effect=_ControlFlowAxeMurderer)
+    logger = MagicMock()
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', lambda: True)
+    monkeypatch.setattr(slack_client, 'rtm_read', lambda: events)
+    monkeypatch.setattr(wb2k.__main__, 'find_channel_id', _find_channel_id)
+    monkeypatch.setattr(wb2k.__main__, 'handle_event', _handle_event)
+    monkeypatch.setattr(time, 'sleep', _sleep)
+
+    with pytest.raises(_ControlFlowAxeMurderer):
+        run(
+            sc=slack_client,
+            channel=channel,
+            message=message,
+            retries=0,
+            logger=logger
+        )
+
+    _handle_event.assert_called_with(
+        event,
+        channel,
+        channel_id,
+        message,
+        slack_client,
+        logger
+    )
+
+    _sleep.assert_called_with(0.5)
+
+
+
+def test_run_fails_without_slack_connection(slack_client, monkeypatch):
+    error_message = "\x1b[31mfatal\x1b[0m: Couldn't connect to Slack"
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', lambda: False)
+
+    with pytest.raises(SystemExit) as err:
+        run(
+            sc=slack_client,
+            channel='general',
+            message='Hello, World!',
+            retries=0,
+            logger=MagicMock()
+        )
+
+    assert str(err.value) == error_message
+
+
+def test_run_fails_with_lost_websocket_connection(slack_client, monkeypatch):
+    error_message = ("\x1b[31mfatal\x1b[0m: Too many failed reconnect "
+                     "attempts, shutting down")
+
+    _rtm_connect = MagicMock(side_effect=[True, False])
+
+    def _raise_websocket_connection_closed_exception():
+        raise websocket.WebSocketConnectionClosedException
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', _rtm_connect)
+    monkeypatch.setattr(
+        slack_client,
+        'rtm_read',
+        _raise_websocket_connection_closed_exception
+    )
+
+    with pytest.raises(SystemExit) as err:
+        run(
+            sc=slack_client,
+            channel='general',
+            message='Hello, World!',
+            retries=0,
+            logger=MagicMock()
+        )
+
+    assert str(err.value) == error_message
+
+def test_run_fails_with_timeout_error(slack_client, monkeypatch):
+    error_message = ("\x1b[31mfatal\x1b[0m: Too many failed reconnect "
+                     "attempts, shutting down")
+
+    _rtm_connect = MagicMock(side_effect=[True, False])
+
+    def _raise_timeout_error():
+        raise TimeoutError
+
+    monkeypatch.setattr(slack_client, 'rtm_connect', _rtm_connect)
+    monkeypatch.setattr(slack_client, 'rtm_read', _raise_timeout_error)
+
+    with pytest.raises(SystemExit) as err:
+        run(
+            sc=slack_client,
+            channel='general',
+            message='Hello, World!',
+            retries=0,
+            logger=MagicMock()
+        )
+
+    assert str(err.value) == error_message
