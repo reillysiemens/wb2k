@@ -217,13 +217,11 @@ def test_run_can_handle_events(slack_client, monkeypatch):
     class _ControlFlowAxeMurderer(Exception):
         """ A.K.A. Infinite Loop Be Gone!"""
 
-    def _sleep(seconds: float) -> None:
-        raise _ControlFlowAxeMurderer
-
     def _find_channel_id(channel: str, sc: SlackClient) -> str:
         return channel_id
 
     _handle_event = MagicMock()
+    _sleep = MagicMock(side_effect=_ControlFlowAxeMurderer)
     logger = MagicMock()
 
     monkeypatch.setattr(slack_client, 'rtm_connect', lambda: True)
@@ -249,6 +247,8 @@ def test_run_can_handle_events(slack_client, monkeypatch):
         slack_client,
         logger
     )
+
+    _sleep.assert_called_with(0.5)
 
 
 
