@@ -9,6 +9,10 @@ import click
 import websocket  # Depedency of slackclient, needed for exception handling
 from slackclient import SlackClient
 
+__author__ = 'Reilly Tucker Siemens'
+__email__ = 'reilly@tuckersiemens.com'
+__version__ = '0.2.0-what-did-you-expect'
+
 
 def bail(msg_type: str, color: str, text: str) -> str:
     return f"{click.style(msg_type, fg=color)}: {text}"

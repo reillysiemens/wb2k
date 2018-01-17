@@ -15,7 +15,7 @@ with open(readme_path, 'r') as readme_file:
     readme = readme_file.read()
 
 # Borrowed from https://github.com/Gandi/gandi.cli/blob/master/setup.py
-version_path = os.path.join(here, 'wb2k', '__init__.py')
+version_path = os.path.join(here, 'wb2k', '__main__.py')
 with open(version_path, 'r') as version_file:
     version = re.compile(r".*__version__ = '(.*?)'",
                          re.S).match(version_file.read()).group(1)
