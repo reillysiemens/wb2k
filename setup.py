@@ -2,7 +2,7 @@
 import re
 import os.path
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup
 from pip.req import parse_requirements
 
 if sys.version_info < (3, 6):
@@ -15,7 +15,7 @@ with open(readme_path, 'r') as readme_file:
     readme = readme_file.read()
 
 # Borrowed from https://github.com/Gandi/gandi.cli/blob/master/setup.py
-version_path = os.path.join(here, 'wb2k', '__init__.py')
+version_path = os.path.join(here, 'wb2k.py')
 with open(version_path, 'r') as version_file:
     version = re.compile(r".*__version__ = '(.*?)'",
                          re.S).match(version_file.read()).group(1)
@@ -31,13 +31,10 @@ setup(
     author='Reilly Tucker Siemens',
     author_email='reilly@tuckersiemens.com',
     url='https://github.com/reillysiemens/wb2k',
-    packages=find_packages(),
-    package_dir={'wb2k': 'wb2k'},
-    include_package_data=True,
     install_requires=install_reqs,
     license='ISCL',
     zip_safe=False,
-    py_modules=['wb2k'],
+    py_modules=['layabout', 'wb2k'],
     keywords='welcome bot Slack',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
@@ -57,7 +54,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'wb2k=wb2k.__main__:cli',
+            'wb2k=wb2k:cli',
         ],
     },
 )
