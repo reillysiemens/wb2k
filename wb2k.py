@@ -1,14 +1,63 @@
-import os
 import logging
+import os
 
 import click
 from slackclient import SlackClient
 
-from layabout import setup_logging, run
+from layabout import Layabout, LayaboutError
 
 __author__ = 'Reilly Tucker Siemens'
 __email__ = 'reilly@tuckersiemens.com'
 __version__ = '0.2.0-what-did-you-expect'
+
+app = Layabout()
+
+
+class ChannelNotFound(Exception):
+    """ TODO """
+
+
+def configure_logger(verbose: int) -> logging.Logger:
+    """ TODO """
+    logging.basicConfig(
+        level=logging.INFO if verbose < 1 else logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt='[%Y-%m-%d %H:%M:%S %z]'
+    )
+    logging.getLogger('urllib3').setLevel(logging.CRITICAL)  # Quiet, requests.
+    return logging.getLogger('wb2k')
+
+
+def find_channel_id(slack: SlackClient, channel: str) -> str:
+    """ TODO """
+    channels = slack.api_call("channels.list")['channels']
+    groups = slack.api_call("groups.list")['groups']
+    channel_ids = [c['id'] for c in channels + groups if c['name'] == channel]
+
+    if not channel_ids:
+        raise ChannelNotFound(f"Couldn't find channel or group #{channel}")
+
+    return channel_ids[0]
+
+
+def member_joined_channel(
+    slack: SlackClient,
+    event: dict,
+    channel: str,
+    message: str,
+    logger: logging.Logger
+) -> str:
+    """ TODO """
+    event_channel = event['channel']
+    user = slack.api_call('users.info', user=event['user'])['user']
+    display_name = user['profile']['display_name']
+    message = message.replace('{user}', f"<@{user['id']}>")
+
+    if event_channel == channel:
+        slack.rtm_send_message(event_channel, message)
+        logger.info(f"Welcomed @{display_name} to #{channel}")
+
+    return message
 
 
 @click.command()
@@ -25,31 +74,21 @@ __version__ = '0.2.0-what-did-you-expect'
               help='The maximum number of times to attempt to reconnect on websocket connection errors')
 @click.version_option()
 def cli(channel: str, message: str, verbose: int, retries: int) -> None:
-    # Due to some unfortunate limitations in the Slack RTM API
-    # (https://api.slack.com/rtm#formatting_messages) message formatting is
-    # limited to basic formatting.
+    """ TODO """
+    logger = configure_logger(verbose)
+    token = os.getenv('WB2K_TOKEN')
+    slack = SlackClient(token=token)
 
-    if verbose > 11:
-        sys.exit(bail('fatal', 'red', "It doesn't go beyond 11"))
+    try:
+        channel_id = find_channel_id(slack, channel)
+        logger.debug(f"Found channel ID {channel_id} for #{channel}")
+    except ChannelNotFound as exc:
+        raise click.ClickException(exc)
 
-    # Get our logging in order.
-    logger = logging.getLogger(__name__)
-    setup_logging(verbose)
+    kwargs = {'channel': channel_id, 'message': message, 'logger': logger}
+    app.handle('member_joined_channel', kwargs=kwargs)(member_joined_channel)
 
-    # Make sure we have an API token.
-    api_token = os.environ.get('WB2K_TOKEN')
-    if not api_token:
-        sys.exit(bail('fatal', 'red', 'WB2K_TOKEN envvar undefined'))
-
-    sc = SlackClient(api_token)
-
-    run(
-        sc=sc,
-        channel=channel,
-        message=message,
-        retries=retries,
-        logger=logger
-    )
-
-if __name__ == '__main__':
-    cli()
+    try:
+        app.run(connector=slack)
+    except LayaboutError as exc:
+        raise click.ClickException(exc)

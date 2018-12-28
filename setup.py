@@ -3,7 +3,6 @@ import re
 import os.path
 import sys
 from setuptools import setup
-from pip.req import parse_requirements
 
 if sys.version_info < (3, 6):
     sys.exit('Python 3.6+ is required. Ancient Python is unsupported.')
@@ -20,8 +19,14 @@ with open(version_path, 'r') as version_file:
     version = re.compile(r".*__version__ = '(.*?)'",
                          re.S).match(version_file.read()).group(1)
 
-install_reqs = [str(r.req) for r in parse_requirements('requirements.txt', session=False)]
-dev_reqs = [str(r.req) for r in parse_requirements('dev-requirements.txt', session=False)]
+install_reqs = [
+    'click==7.0',
+    'layabout==1.0.1',
+]
+dev_reqs = [
+    'pytest',
+    'pytest-cov',
+]
 
 setup(
     name='wb2k',
