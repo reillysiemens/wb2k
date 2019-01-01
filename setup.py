@@ -22,6 +22,7 @@ with open(version_path, 'r') as version_file:
 install_reqs = [
     'click==7.0',
     'layabout==1.0.1',
+    'slackclient==1.3.0',
 ]
 dev_reqs = [
     'pytest',
