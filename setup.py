@@ -40,7 +40,7 @@ setup(
     install_requires=install_reqs,
     license='ISCL',
     zip_safe=False,
-    py_modules=['layabout', 'wb2k'],
+    py_modules=['wb2k'],
     keywords='welcome bot Slack',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
