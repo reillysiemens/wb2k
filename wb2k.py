@@ -8,7 +8,7 @@ from layabout import Layabout, LayaboutError
 
 __author__ = 'Reilly Tucker Siemens'
 __email__ = 'reilly@tuckersiemens.com'
-__version__ = '0.2.0-what-did-you-expect'
+__version__ = '0.3.0-spanish-inquisition'
 
 
 class ChannelNotFound(Exception):
