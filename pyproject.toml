@@ -34,6 +34,30 @@ tox = "^3.12"
 [tool.poetry.scripts]
 wb2k = "wb2k:cli"
 
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist = true
+envlist = py37
+
+[testenv]
+whitelist_externals = poetry
+skip_install = true
+commands =
+    poetry install
+    poetry run flake8 wb2k.py tests/
+    poetry run mypy \
+        --ignore-missing-imports \
+        --disallow-untyped-defs \
+        wb2k.py
+    poetry run pytest \
+        --verbose \
+        --cov=wb2k \
+        --cov-report=term-missing \
+        --cov-branch \
+        {posargs}
+"""
+
 [build-system]
 requires = ["poetry>=1.0.0a4"]
 build-backend = "poetry.masonry.api"
