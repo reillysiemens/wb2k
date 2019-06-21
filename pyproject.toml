@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "wb2k"
+version = "0.3.0"
+description = "Welcome new folks to a Slack channel."
+authors = ["Reilly Tucker Siemens <reilly@tuckersiemens.com>"]
+license = "ISC"
+readme = "README.md"
+repository = "https://github.com/reillysiemens/wb2k"
+keywords = ["welcome", "bot", "Slack"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: ISC License (ISCL)",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: POSIX :: BSD :: FreeBSD",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3 :: Only"
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+click = "^7.0"
+slackclient = "^2.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^4.6"
+pytest-cov = "^2.7"
+mypy = "^0.710.0"
+flake8 = "^3.7"
+tox = "^3.12"
+
+[tool.poetry.scripts]
+wb2k = "wb2k:cli"
+
+[build-system]
+requires = ["poetry>=1.0.0a4"]
+build-backend = "poetry.masonry.api"

@@ -1,4 +1,0 @@
-# TODO: Put package development requirements here.
--r requirements.txt
-pytest==3.2.3
-pytest-cov==2.5.1
