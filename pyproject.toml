@@ -56,14 +56,16 @@ wb2k = "wb2k:cli"
 [tool.tox]
 legacy_tox_ini = """
 [tox]
+minversion = 3.12.0
 skipsdist = true
-envlist = py37
+skip_missing_interpreters = true
+envlist = py37, py38
 
 [testenv]
 whitelist_externals = poetry
 skip_install = true
 commands =
-    poetry install
+    poetry install --verbose
     poetry run black --verbose --check wb2k.py tests
     poetry run flake8 --ignore=E501 --max-complexity=12 wb2k.py tests/
     poetry run mypy \

@@ -1,12 +1,13 @@
 dist: xenial
 language: python
 python:
-  - "3.7"
+  - 3.7
+  - 3.8-dev
 install:
-  - pip install --upgrade pip coveralls tox-travis
-  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python3 - --preview --yes
-  - source $HOME/.poetry/env
-  - poetry install --verbose
+  # https://github.com/sdispater/poetry/issues/613
+  # - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python3 - --preview --yes
+  # - source $HOME/.poetry/env
+  - pip install --upgrade pip coveralls tox tox-travis poetry
 script:
   - tox
 after_success:
