@@ -1,5 +1,5 @@
 # `wb2k`
-[![build status][build status]][travis-ci] [![coverage status][coverage status]][coveralls]
+[![build status][build status]][travis-ci] [![coverage status][coverage status]][coveralls] [![code style][code style]][black]
 
 Welcoming new folks to `#general` since `date --date='@1463824090'` (except for
 that time between `1503469220` and `1506995527` when it was broken).
@@ -113,3 +113,5 @@ This package was created with help from [Cookiecutter].
 [coveralls]: https://coveralls.io/github/reillysiemens/wb2k?branch=master
 [build status]: https://img.shields.io/travis/reillysiemens/wb2k/master.svg?style=flat-square&label=build
 [coverage status]: https://img.shields.io/coveralls/reillysiemens/wb2k/master.svg?style=flat-square&label=coverage
+[black]: https://github.com/ambv/black
+[code style]: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square
