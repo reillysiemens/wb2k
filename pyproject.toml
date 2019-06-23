@@ -74,6 +74,7 @@ commands =
         --verbose \
         --cov=wb2k \
         --cov-report=term-missing \
+        --cov-fail-under=90 \
         --cov-branch \
         {posargs}
 """
