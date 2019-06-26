@@ -9,4 +9,6 @@ __version__ = "0.2.0-what-did-you-expect"
 @click.option("-v", "--verbose", count=True, help="It goes to 11.")
 @click.version_option()
 def cli(verbose: int) -> None:
-    raise click.ClickException(click.style("It doesn't work.", fg="red"))
+    """ TODO """
+    if verbose > 11:
+        raise click.ClickException("It doesn't go beyond 11")
